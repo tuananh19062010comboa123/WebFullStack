@@ -1,0 +1,35 @@
+body{
+    margin: 0;
+    padding: 0;
+    background-color: pink;
+}
+#horizontal{
+    width: 700px;
+}
+.Menu{
+    background-color:paleturquoise;
+    color : black;
+    text-align: center;
+    font-weight: bold;
+    margin-left: 100px;
+    
+}
+.Menu span{
+    width: 100px;
+    height: 30px;
+    display: inline-block;
+    line-height: 30px;
+}
+.Menu span:hover{
+    background-color:rebeccapurple;
+    color: azure;
+}
+.Menu.Menu_vertical{
+    background-color:yellow;
+    margin-top: 30px;
+    margin-left: 350px;
+    width: 100px;
+}
+.Menu.Menu-vertical span{
+    display: block;
+}

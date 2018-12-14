@@ -1,6 +1,5 @@
 'use strict'
 
-
 function search(input, target) {
   for (var i =0 ; i<input.length;i++){
       if(input[i] == target ){
@@ -9,6 +8,7 @@ function search(input, target) {
   } 
   return -1;
 }
+
 function sort(input) {
   for(var i = 0;i<input.length;i++){
     for(var j = i+1;j<input.length;j++){
@@ -38,5 +38,4 @@ function generate(testLengthArray){
   arrayJson.push(myJsonString);
   return arrayJson;
 }
-
 module.exports = generate

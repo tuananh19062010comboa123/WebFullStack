@@ -1,92 +1,78 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const fs = require("fs"); // fs la file system
-const app = express(); // app chinh la web server cua minh
+const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const app = express(); // app là web server
 
+app.use(express.static(__dirname+'/public'));// middleware: express.static: thư mục muốn cho là static
+app.use(bodyParser.urlencoded({extended:false}));
 
-//request co method GET toi duong dan: http://localhost:6969/
-app.get("/", (req, res) => {  // 1 request tra ve 1 response
-    // response.send(JSON.stringify({a: 5, b: 10}));
-    // response.send("Hello world!"); // Lỗi HTTP_HEADERS_SENT là do có từ 2 response trở lên cho 1 request
-    // response.send("<h1> Hello world bold</h1>");
-    const questions = JSON.parse(fs.readFileSync("./questions.json", { encoding: "utf-8"}));
-    if (questions.length == 0) res.send("Chưa có câu hỏi nào")
-    else{
-        var randomQuestion = questions[Math.floor(Math.random() * questions.length)];
-        res.send(`<h1> ${randomQuestion.content} </h1>
-            <form method="POST" action="vote/${randomQuestion.id}">
-                <button type="submit" name="vote" value="y">Đúng/Có/Phải</button>
-                <button type="submit" name="vote" value="n">Sai/Không/Trái</button>
-            </form>` 
-        ); 
-    }
+app.get("/answer",(req,res)=>{
+    // response.send(JSON.stringify({a:5,b:7}));
+   // response.send(JSON.stringify({a:5,b:7}));
+   const questions = JSON.parse(fs.readFileSync("./questionAsk.json",{encoding:"utf-8"}));
+   if(questions.length==0){
+        res.sendFile(__dirname+"/view/noAnswer.html");
+   }else{
+        res.sendFile(__dirname +"/view/answer.html");
+   }
+   
 });
+app.get("/api/random",(req,res)=>{
+    const questions = JSON.parse(fs.readFileSync("./questionAsk.json",{encoding:"utf-8"}));// danh sách câu hỏi
+    const randomQuestion = questions[Math.floor(Math.random()*questions.length)] // câu hỏi ngẫu nhiên 
+    res.send({question:randomQuestion});
+})
 
-
-
-//Y nghia $: "abc" + variable + "xyz" == `abc${variable}xyz` 
-
-app.get("/ask", (req, res) => {
+app.get("/ask",(req,res)=>{
     res.sendFile(__dirname + "/view/ask.html");
-});
+}); // đến trang ask 
 
-app.use(bodyParser.urlencoded({ extended: false})); // Library dung dau tien de don duoc cac thu dang toi
-
-app.post("/addquestion", (req, res)  => {
-    const questions = JSON.parse(fs.readFileSync("./questions.json", { encoding: "utf-8"}));
-    console.log(questions);
-    const newQuestion = {
+app.post("/addQuestion",(req,res)=>{
+    const questions = JSON.parse(fs.readFileSync("./questionAsk.json",{encoding:"utf-8"})); // đọc dữ liệu ra
+    const newQuestion  = {
         content: req.body.questionContent,
-        yes: 0,
-        no: 0,
-        id: questions.length
-    };
-    questions.push(newQuestion);
-    console.log(questions);
-    fs.writeFileSync("./questions.json", JSON.stringify(questions));
-    res.redirect("/");
+        yes:0,
+        no:0,
+        id:questions.length
+    }; // dữ liệu mới
+    questions.push(newQuestion); // thêm dữ liệu vào json 
+    fs.writeFileSync("./questionAsk.json",JSON.stringify(questions)); // ghi vào 
+    res.redirect("/ask")
 });
-
-app.post("/vote/:id", (req, res, next) => {
-    const questions = JSON.parse(fs.readFileSync("./questions.json", { encoding: "utf-8"}));
-    for (i = 0; i < questions.length; i++) { 
-        if (questions[i].id == req.params.id) {
-            var locatedQuestion = questions[i];
-            console.log(locatedQuestion); // check question before changing yes / no
-            if (req.body.vote == "y") {
-                locatedQuestion.yes += 1;
-            } else if (req.body.vote == "n") {
-                locatedQuestion.no += 1;
-            };
-            console.log(locatedQuestion); // check question after changing yes / no
-            break;
-        };
-    };
-    fs.writeFileSync("./questions.json", JSON.stringify(questions));
-    res.redirect("/");
+app.get("/vote/:questionId/:vote",(req,res)=>{
+    const questionId = req.params.questionId; // id ở trên đường dẫn
+    const vote = req.params.vote;
+    let questions = JSON.parse(fs.readFileSync("./questionAsk.json"),{encoding:"utf-8"});
+    questions.forEach((question,index)=>{
+        if(question.id == questionId){
+            if(vote=="yes"){
+                questions[index].yes+=1;
+            }
+            else{
+                questions[index].no+=1;
+            }
+        }
+    });
+    fs.writeFileSync("./questionAsk.json",JSON.stringify(questions));
 });
-
-
-
-
-//https://localhotst:6969/....
-
-
-// app.get("/about", (request, response) => {
-//     // Show ra trang CV => BTVN và file CV có đủ CSS
-//     response.sendFile(__dirname + "/resource/a.html");
-// });
-
-// // app.get("/style.css", (request, response) =>{
-// //     response.sendFile(__dirname + "/resource/style.css");
-// // });
-
-// //app.use(express.static("resource")); // Nen de o duoi
-
-// app.use("/about", express.static("resource"));
-app.use("/public", express.static("public"));
-
-app.listen(1999, (err) => {
-    if (err) console.log(err)
-    else console.log("Server started successfully");
+app.get("/question/:questionId",(req,res)=>{
+    const questionId = req.params.questionId; // id ở trên đường dẫn
+    let questions = JSON.parse(fs.readFileSync("./questionAsk.json"),{encoding:"utf-8"});
+    questions.forEach((question)=>{
+        if(question.id == questionId){
+            res.send({question:question});
+        }
+    });
+})
+app.get("/result/:questionId",(req,res)=>{
+    const questionId = req.params.questionId;
+    res.sendFile(__dirname+"/view/result.html");
+})
+app.listen(1999,(err)=>{
+    if(err){
+        console.log(err);
+    }
+    else{
+        console.log("Server start success!");
+    }
 });
